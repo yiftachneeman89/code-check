@@ -81,6 +81,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 button.primary:hover:not(:disabled) { background: var(--accent-pressed); border-color: var(--accent-pressed); }
 
 .icon-btn { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--surface); }
+.pill-btn { height: 38px; padding: 0 14px; border-radius: 999px; background: var(--surface); font-size: 14px; font-weight: 500; }
 
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
