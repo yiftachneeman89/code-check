@@ -178,6 +178,19 @@ async function getRound(rid) {
     // the chunk is gone (the code was re-uploaded) - pick another
     state = await newRound(rid, [state.chunk.id]);
   }
+  return dropUnwantedQuestions(state);
+}
+
+const UNWANTED_KINDS = new Set(["improve", "concept"]);  // question kinds that were removed
+
+// Remove dropped question kinds from a saved round, keeping answers on the right questions.
+function dropUnwantedQuestions(state) {
+  const keep = state.questions.map((q, i) => i).filter((i) => !UNWANTED_KINDS.has(state.questions[i].kind));
+  if (keep.length === state.questions.length) return state;
+  const answers = {};
+  keep.forEach((old, i) => { if (state.answers[String(old)]) answers[String(i)] = state.answers[String(old)]; });
+  state = { ...state, questions: keep.map((i) => state.questions[i]), answers };
+  saveRound(state);
   return state;
 }
 

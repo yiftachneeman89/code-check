@@ -87,7 +87,7 @@ const QUESTION_SCHEMA = {
         type: "object",
         properties: {
           question: { type: "string" },
-          kind: { type: "string", enum: ["explain", "why", "what-if", "concept"] },
+          kind: { type: "string", enum: ["explain", "why", "what-if"] },
           key_points: { type: "array", items: { type: "string" } },
         },
         required: ["question", "kind", "key_points"],
@@ -119,12 +119,10 @@ function questionSystem(project) {
 const QUESTION_KINDS = {
   code: `- explain: what a specific part does, step by step
 - why: why it is written this way (a design choice, a rule of the language, framework or library)
-- what-if: what breaks or changes if something is removed, reordered, or receives unexpected input (null/empty values, errors, slow network, concurrency)
-- concept: the underlying programming concept the chunk relies on (data structures, async, closures, lifecycle, recursion, the framework's model...)`,
+- what-if: what breaks or changes if something is removed, reordered, or receives unexpected input (null/empty values, errors, slow network, concurrency)`,
   markup: `- explain: what this part of the markup/styles does and how it will look or behave on screen
 - why: why specific attributes, selectors or values are used (sizing, layout, constraints, references, theming)
-- what-if: what changes on screen if an attribute or rule is removed or changed (small screens, long text, missing ids, dark mode)
-- concept: the concept behind it (element hierarchy, box model, layout systems, specificity, resource/config declarations...)`,
+- what-if: what changes on screen if an attribute or rule is removed or changed (small screens, long text, missing ids, dark mode)`,
 };
 
 function describeChunk(chunk) {
