@@ -224,43 +224,6 @@ function publicView(state) {
   };
 }
 
-// ---------------------------------------------------------------- progress carried over in the project folder
-
-// A code-check-progress.json at the top of the picked folder (written by the desktop app's export)
-// carries rounds and scores over. Returns its data, or null.
-async function findProgress(items) {
-  const hit = items.find(({ path }) => {
-    const parts = path.split("/");
-    return parts[parts.length - 1] === "code-check-progress.json" && parts.length <= 2;
-  });
-  if (!hit) return null;
-  try {
-    const data = JSON.parse(await hit.file.text());
-    if (!data || typeof data.rounds !== "object") return null;
-    const answers = Object.values(data.rounds).reduce((n, r) => n + Object.keys(r.answers || {}).length, 0);
-    return { rounds: data.rounds, used: data.used || [], count: Object.keys(data.rounds).length, answers };
-  } catch {
-    return null;
-  }
-}
-
-// Adds carried-over rounds; when both have a round, the one with more answers wins.
-function mergeProgress(progress) {
-  if (!progress) return 0;
-  const rounds = allRounds();
-  let added = 0;
-  for (const [rid, r] of Object.entries(progress.rounds)) {
-    const mine = rounds[rid];
-    if (!mine || Object.keys(mine.answers || {}).length < Object.keys(r.answers || {}).length) {
-      rounds[rid] = { ...r, round_id: rid, date: r.date || rid.slice(0, 10), answers: r.answers || {} };
-      added++;
-    }
-  }
-  store.setJson("rounds", rounds);
-  store.setJson("used", [...new Set([...store.json("used", []), ...progress.used])]);
-  return added;
-}
-
 // ---------------------------------------------------------------- the old /api endpoints
 
 const Quiz = {

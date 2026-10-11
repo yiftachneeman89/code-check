@@ -60,125 +60,6 @@ function setLoggedIn(on) {
   document.getElementById("projectName").textContent = on ? Session.project.name : "Quiz yourself on your own code";
 }
 
-function renderLogin({ replacing = false } = {}) {
-  setLoggedIn(false);
-  app.innerHTML = "";
-  let project = null;
-
-  const status = el("p", { className: "drop-status", textContent: "Nothing is uploaded to a server. The files are read right here in your browser." });
-  const folderInput = el("input", { type: "file", hidden: true, multiple: true });
-  folderInput.webkitdirectory = true;
-  const filesInput = el("input", { type: "file", hidden: true, multiple: true });
-  const folderBtn = el("button", { type: "button", html: `${icon("folder")}<span>Choose folder</span>` });
-  const filesBtn = el("button", { type: "button", html: `${icon("files")}<span>Choose files</span>` });
-  folderBtn.onclick = () => folderInput.click();
-  filesBtn.onclick = () => filesInput.click();
-
-  let progress = null;  // rounds carried over from the desktop app, found in the picked folder
-  const drop = el("div", { className: "drop" },
-    el("p", { className: "drop-title", textContent: "Drop your project folder here" }),
-    el("div", { className: "drop-buttons" }, folderBtn, filesBtn),
-    status, folderInput, filesInput,
-  );
-
-  async function take(items) {
-    status.className = "drop-status";
-    status.textContent = "Reading your code…";
-    try {
-      const read = await readProject(items);
-      if (!read.files.length) throw new Error("No source code found there. Pick the folder that contains your project's code.");
-      const chunks = allChunks(read.files);
-      if (!chunks.length) throw new Error("That code is too short to quiz on. Add more files or the whole project.");
-      project = read;
-      progress = await findProgress(items);
-      if (!nameInput.value) nameInput.value = read.name || "";
-      drop.classList.add("ready");
-      status.className = "drop-status ok";
-      status.textContent = `✓ ${read.files.length} file${read.files.length === 1 ? "" : "s"} · ${read.lines.toLocaleString()} lines · ` +
-        `${chunks.length} quiz chunks · ${mainLanguage(read.files)}` + (read.skipped ? ` (skipped ${read.skipped} non-code / build files)` : "") +
-        (progress ? ` · plus your earlier progress: ${progress.count} chunk${progress.count === 1 ? "" : "s"}, ${progress.answers} answer${progress.answers === 1 ? "" : "s"}` : "");
-    } catch (e) {
-      project = null;
-      drop.classList.remove("ready");
-      status.className = "drop-status bad";
-      status.textContent = e.message;
-    }
-  }
-  folderInput.onchange = () => folderInput.files.length && take(filesFromInput(folderInput.files));
-  filesInput.onchange = () => filesInput.files.length && take(filesFromInput(filesInput.files));
-  drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
-  drop.ondragleave = () => drop.classList.remove("over");
-  drop.ondrop = async (e) => {
-    e.preventDefault();
-    drop.classList.remove("over");
-    take(await filesFromDrop(e.dataTransfer));
-  };
-
-  const nameInput = el("input", { type: "text", className: "field", placeholder: "e.g. My Portfolio Site", maxLength: 60 });
-  const keyInput = el("input", { type: "password", className: "field", placeholder: "Paste your key here", autocomplete: "off", spellcheck: false });
-  if (replacing) {
-    nameInput.value = Session.project.name;
-    keyInput.value = Session.key;
-  }
-
-  const error = el("div", { className: "banner error", hidden: true });
-  const start = el("button", { className: "primary start-btn", type: "submit", textContent: replacing ? "Update my code" : "Start" });
-
-  const form = el("form", { className: "card login" },
-    el("h2", { textContent: replacing ? "Update your code" : "Your daily code check" }),
-    el("p", { className: "login-lead", textContent: replacing
-      ? `Your project changed? Choose the new folder or files and they replace the ${Session.project.files.toLocaleString()} file${Session.project.files === 1 ? "" : "s"} you have now. ` +
-        "Your streak, history and API key stay."
-      : "Every day you get a chunk of your own project and 3–4 questions about it. Answer by typing or speaking, and Gemini grades you like a mentor. 3 answers a day keep your streak alive." }),
-    el("div", { className: "step" },
-      el("h3", { html: replacing ? "Your new code" : '<span class="step-num">1</span>Your code' }),
-      el("p", { className: "step-hint", textContent: "The whole project folder works best. Build folders, libraries and images are skipped automatically." }),
-      drop,
-      el("label", { className: "field-label" }, el("span", { textContent: "Project name" }), nameInput),
-    ),
-    replacing ? null : el("div", { className: "step" },
-      el("h3", { html: '<span class="step-num">2</span>Your Gemini API key' }),
-      el("p", { className: "step-hint", html: 'Free from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. ' +
-        "Sign in with Google, click <em>Create API key</em>, and paste it here." }),
-      keyInput,
-    ),
-    error,
-    el("div", { className: "login-actions" }, start),
-    el("p", { className: "privacy", html: `${icon("lock")}<span>Your code and key stay in this browser and are sent only to Google Gemini. ` +
-      "Nobody else, including whoever shared this site with you, can see them. Log out any time to erase everything.</span>" }),
-  );
-  if (replacing) {
-    const cancel = el("button", { type: "button", textContent: "Cancel" });
-    cancel.onclick = () => boot();
-    form.querySelector(".login-actions").prepend(cancel);
-  }
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    error.hidden = true;
-    const key = keyInput.value.trim();
-    const fail = (msg) => { error.textContent = msg; error.hidden = false; };
-    if (!project) return fail(replacing ? "Choose your new project folder or files first." : "Choose your project folder or files first (step 1).");
-    if (!key) return fail("Paste your Gemini API key (step 2).");
-    start.disabled = true;
-    start.textContent = replacing ? "Saving…" : "Checking your key…";
-    try {
-      if (!replacing) await checkKey(key);
-      const name = nameInput.value.trim() || project.name || "My project";
-      await Session.save(key, { name, language: mainLanguage(project.files), files: project.files.length, lines: project.lines }, project.files);
-      mergeProgress(progress);
-      boot();
-    } catch (err) {
-      fail(err.message);
-      start.disabled = false;
-      start.textContent = replacing ? "Update my code" : "Start";
-    }
-  };
-
-  app.append(form);
-  (replacing ? drop : nameInput).scrollIntoView({ block: "nearest" });
-}
-
 // ---------------------------------------------------------------- streak + daily goal
 
 let currentDay = null;
@@ -764,12 +645,6 @@ function showError(message) {
 
 document.getElementById("historyBtn").onclick = openHistory;
 document.getElementById("closeHistory").onclick = () => document.getElementById("historyDialog").close();
-document.getElementById("replaceBtn").onclick = () => renderLogin({ replacing: true });
-document.getElementById("logoutBtn").onclick = async () => {
-  if (!confirm("Log out and erase your code, key, streak and history from this browser?")) return;
-  await Session.logout();
-  renderLogin();
-};
 addLanguagePicker();
 
 async function boot() {
@@ -777,7 +652,7 @@ async function boot() {
   let ok = false;
   try { ok = await Session.load(); } catch {}
   if (ok) keepForever();
-  if (!ok) { renderLogin(); return; }
+  if (!ok) { location.replace("/review-deck/"); return; }  // sign-in lives in Review Deck
   setLoggedIn(true);
   showLoading("Picking today's code and writing your questions…");
   try { renderDay(await Quiz.today()); }
