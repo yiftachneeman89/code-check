@@ -74,6 +74,7 @@ function renderLogin({ replacing = false } = {}) {
   folderBtn.onclick = () => folderInput.click();
   filesBtn.onclick = () => filesInput.click();
 
+  let progress = null;  // rounds carried over from the desktop app, found in the picked folder
   const drop = el("div", { className: "drop" },
     el("p", { className: "drop-title", textContent: "Drop your project folder here" }),
     el("div", { className: "drop-buttons" }, folderBtn, filesBtn),
@@ -89,11 +90,13 @@ function renderLogin({ replacing = false } = {}) {
       const chunks = allChunks(read.files);
       if (!chunks.length) throw new Error("That code is too short to quiz on. Add more files or the whole project.");
       project = read;
+      progress = await findProgress(items);
       if (!nameInput.value) nameInput.value = read.name || "";
       drop.classList.add("ready");
       status.className = "drop-status ok";
       status.textContent = `✓ ${read.files.length} file${read.files.length === 1 ? "" : "s"} · ${read.lines.toLocaleString()} lines · ` +
-        `${chunks.length} quiz chunks · ${mainLanguage(read.files)}` + (read.skipped ? ` (skipped ${read.skipped} non-code / build files)` : "");
+        `${chunks.length} quiz chunks · ${mainLanguage(read.files)}` + (read.skipped ? ` (skipped ${read.skipped} non-code / build files)` : "") +
+        (progress ? ` · plus your earlier progress: ${progress.count} chunk${progress.count === 1 ? "" : "s"}, ${progress.answers} answer${progress.answers === 1 ? "" : "s"}` : "");
     } catch (e) {
       project = null;
       drop.classList.remove("ready");
@@ -163,6 +166,7 @@ function renderLogin({ replacing = false } = {}) {
       if (!replacing) await checkKey(key);
       const name = nameInput.value.trim() || project.name || "My project";
       await Session.save(key, { name, language: mainLanguage(project.files), files: project.files.length, lines: project.lines }, project.files);
+      mergeProgress(progress);
       boot();
     } catch (err) {
       fail(err.message);
