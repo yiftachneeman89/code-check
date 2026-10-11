@@ -772,6 +772,7 @@ async function boot() {
   showLoading("Loading…");
   let ok = false;
   try { ok = await Session.load(); } catch {}
+  if (ok) keepForever();
   if (!ok) { renderLogin(); return; }
   setLoggedIn(true);
   showLoading("Picking today's code and writing your questions…");

@@ -60,6 +60,12 @@ function dbWipe() {
   });
 }
 
+// Browsers may clear site data when the disk gets full unless the site asks to keep it.
+// Asking once is enough; Edge and Chrome grant it silently for sites you use.
+function keepForever() {
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
+}
+
 // ---------------------------------------------------------------- session
 
 const Session = {
@@ -84,6 +90,7 @@ const Session = {
   },
 
   async save(key, project, files) {
+    keepForever();
     await dbPut("files", files);
     store.set("key", key);
     store.setJson("project", project);
