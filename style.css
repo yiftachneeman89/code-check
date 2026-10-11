@@ -578,3 +578,8 @@ dialog::backdrop { background: rgba(20, 20, 20, .45); backdrop-filter: blur(3px)
 .start-btn { padding: 11px 28px; font-size: 16px; }
 .privacy { display: flex; gap: 10px; align-items: flex-start; margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--stroke); font-size: 13px; color: var(--text-2); }
 .privacy svg { width: 16px; height: 16px; margin-top: 2px; color: var(--success); }
+
+/* link back to Review Deck (shown when you came from there) */
+.deck-back { flex: none; display: inline-flex; align-items: center; height: 30px; padding: 0 11px; margin-right: 4px; border-radius: 999px; border: 1px solid #cfccc2; background: #fff; color: #141414; font: 600 12.5px Inter, system-ui, sans-serif; text-decoration: none; white-space: nowrap; }
+.deck-back:hover { border-color: #141414; }
+.topbar .brand { margin-right: auto; }
