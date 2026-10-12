@@ -113,6 +113,7 @@ function renderDay(day) {
 
   let dateText = new Date(day.date + "T00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
   if (day.round > 1) dateText += ` · chunk ${day.round}`;
+  if (day.chunk.fresh) dateText += " · code you just wrote";
   const segments = el("div", { className: "segments" }, ...day.questions.map(() => el("span", { className: "seg" })));
   app.append(el("section", { className: "hero" },
     el("div", { className: "hero-top" },
@@ -655,7 +656,9 @@ async function boot() {
   if (!ok) { location.replace("/review-deck/"); return; }  // sign-in lives in Review Deck
   setLoggedIn(true);
   showLoading("Picking today's code and writing your questions…");
-  try { renderDay(await Quiz.today()); }
+  const file = new URLSearchParams(location.search).get("file");  // Review Deck: "Quiz me on this screen"
+  if (file) history.replaceState(null, "", location.pathname);   // a reload goes back to the normal quiz
+  try { renderDay(await (file ? Quiz.forFile(file) : Quiz.today())); }
   catch (e) { showError(e.message); }
 }
 

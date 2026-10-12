@@ -149,9 +149,35 @@ function chunkStatus(result) {
   return result.complete && result.score >= MASTERED_AT ? "mastered" : "learning";
 }
 
+// Chunks of new or changed code (Review Deck adds their ids when your code changes) are quizzed first.
+// A picked one leaves the list; ids that no longer exist are dropped.
+function takeFocus(exclude = []) {
+  const ids = new Set(Session.chunks.map((c) => c.id));
+  const focus = store.json("focus", []).filter((id) => ids.has(id));
+  const id = focus.find((x) => !exclude.includes(x));
+  store.setJson("focus", focus.filter((x) => x !== id));
+  return id ? { ...Session.chunks.find((c) => c.id === id), fresh: true } : null;
+}
+
+const hasFocus = () => store.json("focus", []).some((id) => Session.chunks.some((c) => c.id === id));
+
+// the chunk of one file you know least (for "quiz me on this screen")
+function chunkOfFile(path) {
+  const pool = Session.chunks.filter((c) => c.file === path);
+  if (!pool.length) throw new Error("There's no quiz-sized code in that file.");
+  const results = chunkResults();
+  const used = store.json("used", []);
+  const rank = (c) => (results[c.id] ? results[c.id].score : -1) + (used.includes(c.id) ? 50 : 0);
+  const best = Math.min(...pool.map(rank));
+  const top = pool.filter((c) => rank(c) === best);
+  return top[Math.floor(Math.random() * top.length)];
+}
+
 function pickChunk(exclude = []) {
   const chunks = Session.chunks;
   if (!chunks.length) throw new Error("No quiz-sized code found in your upload. Try uploading your whole project folder.");
+  const focus = takeFocus(exclude);
+  if (focus) return focus;
   let used = store.json("used", []);
   let fresh = chunks.filter((c) => !used.includes(c.id) && !exclude.includes(c.id));
   if (!fresh.length) {  // seen everything - revisit what isn't mastered yet, then start over
@@ -170,8 +196,8 @@ function pickChunk(exclude = []) {
   return chunk;
 }
 
-async function newRound(rid, exclude = []) {
-  const chunk = pickChunk(exclude);
+async function newRound(rid, exclude = [], chosen = null) {
+  const chunk = chosen || pickChunk(exclude);
   const qs = await makeQuestions(Session.key, Session.project, chunk);
   const state = { date: rid.slice(0, 10), round_id: rid, chunk, title: qs.title, questions: qs.questions, answers: {} };
   saveRound(state);
@@ -183,6 +209,9 @@ async function getRound(rid) {
   if (!state) state = await newRound(rid);
   else if (!Object.keys(state.answers).length && !Session.chunks.some((c) => c.id === state.chunk.id)) {
     // the chunk is gone (the code was re-uploaded) - pick another
+    state = await newRound(rid, [state.chunk.id]);
+  } else if (!Object.keys(state.answers).length && !state.chunk.fresh && hasFocus()) {
+    // nothing answered yet and you've written new code since - quiz on that instead
     state = await newRound(rid, [state.chunk.id]);
   }
   return dropUnwantedQuestions(state);
@@ -237,13 +266,16 @@ const Quiz = {
     return publicView(await newRound(rid, old ? [old.chunk.id] : []));
   },
 
-  async next() {
+  async next(file = null) {
     const d = today();
     const rounds = roundsFor(d);
     const done = rounds.map((r) => allRounds()[r].chunk.id);
     const rid = rounds.length ? `${d}_${String(rounds.length + 1).padStart(2, "0")}` : d;
-    return publicView(await newRound(rid, done));
+    return publicView(await newRound(rid, done, file ? chunkOfFile(file) : null));
   },
+
+  // a new round on one file (Review Deck's "Quiz me on this screen": /code-check/?file=<path>)
+  forFile(path) { return this.next(path); },
 
   async grade(index, answer, rid) {
     if (!rid.startsWith(today())) throw new Error("That was a past day's chunk. Reload the page for today's.");
