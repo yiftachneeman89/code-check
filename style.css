@@ -18,10 +18,11 @@
 
   --accent: #141414;
   --accent-pressed: #000000;
-  --accent-muted: rgba(20, 20, 20, .08);
+  --accent-muted: rgba(var(--tint), .08);
   --red: #c8231b;
   --now: #d9620b;
   --now-muted: rgba(217, 98, 11, .1);
+  --now-ink: #9a4a07;
   --success: #15803d;
   --success-muted: rgba(21, 128, 61, .08);
   --error: #c8231b;
@@ -35,10 +36,52 @@
   --on-accent: #ffffff;
 
   --code-bg: #1b1b1f;
+  --code-head: #faf9f6;
+  --tint: 20, 20, 20;
   --radius: 18px;
   --display: Oswald, "Arial Narrow", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
+
+
+/* Black mode: chosen with the White/Black switch on Review Deck (/review-deck/theme.js) */
+:root[data-theme="dark"] {
+  --bg: #0e0e0f;
+  --surface: #18181a;
+  --raised: #242427;
+  --stroke: #2a2a2d;
+  --field-stroke: #3a3a3e;
+  --hero: #18181a;
+
+  --accent: #f4f3ef;
+  --accent-pressed: #ffffff;
+  --red: #ef4b40;
+  --now: #f07a2a;
+  --now-muted: rgba(240, 122, 42, .14);
+  --now-ink: #f59a5a;
+  --success: #3fbf6f;
+  --success-muted: rgba(63, 191, 111, .12);
+  --error: #ef4b40;
+  --error-muted: rgba(239, 75, 64, .13);
+  --info: #5b8def;
+  --info-muted: rgba(91, 141, 239, .13);
+
+  --text: #f4f3ef;
+  --text-2: #b4b3ad;
+  --text-3: #85847e;
+  --on-accent: #0e0e0f;
+
+  --code-bg: #111113;
+  --code-head: #1d1d20;
+  --tint: 255, 255, 255;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .brand-logo { border-radius: 10px; box-shadow: 0 0 0 1px var(--field-stroke); }
+:root[data-theme="dark"] .chip.kind-explain { color: #7ba4f2; background: rgba(91, 141, 239, .14); }
+:root[data-theme="dark"] .chip.kind-why { color: #a98cf5; background: rgba(160, 124, 245, .14); }
+:root[data-theme="dark"] .chip.kind-what-if { color: #f59a5a; background: rgba(240, 122, 42, .14); }
+:root[data-theme="dark"] .chip.kind-improve { color: #3fbf6f; background: rgba(63, 191, 111, .13); }
+:root[data-theme="dark"] .chip.kind-concept { color: #ef6b62; background: rgba(239, 75, 64, .13); }
 
 * { box-sizing: border-box; }
 
@@ -109,10 +152,10 @@ button.primary:hover:not(:disabled) { background: var(--accent-pressed); border-
 .daily-goal.met .dg-flame { color: var(--now); animation: flicker 1.6s ease-in-out infinite; }
 @keyframes flicker { 50% { transform: scale(1.12) rotate(-4deg); } }
 .pips { display: flex; gap: 5px; }
-.pip { width: 22px; height: 8px; border-radius: 99px; background: rgba(20, 20, 20, .1); transition: background .3s; }
+.pip { width: 22px; height: 8px; border-radius: 99px; background: rgba(var(--tint), .1); transition: background .3s; }
 .pip.on { background: var(--now); }
 .dg-text { color: var(--text-2); margin-left: auto; }
-.daily-goal.met .dg-text { color: #9a4a07; }
+.daily-goal.met .dg-text { color: var(--now-ink); }
 .next-btn { margin-top: 18px; padding: 11px 22px; font-size: 15px; }
 .streak .flame { fill: currentColor; stroke: none; }
 
@@ -168,7 +211,7 @@ main { max-width: 880px; margin: 0 auto; padding: 8px 16px 80px; }
 
 .progress { margin-top: 20px; }
 .segments { display: flex; gap: 6px; }
-.seg { flex: 1; height: 8px; border-radius: 99px; background: rgba(20, 20, 20, .08); transition: background .4s; }
+.seg { flex: 1; height: 8px; border-radius: 99px; background: rgba(var(--tint), .08); transition: background .4s; }
 .seg.now { background: var(--accent-muted); box-shadow: inset 0 0 0 1px var(--accent); }
 .progress-label { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-2); }
 
@@ -190,7 +233,7 @@ main { max-width: 880px; margin: 0 auto; padding: 8px 16px 80px; }
   border-radius: 12px;
   border: 1px solid rgba(217, 98, 11, .3);
   background: var(--now-muted);
-  color: #9a4a07;
+  color: var(--now-ink);
   font-size: 14px;
 }
 .banner code { color: var(--text); font-family: var(--mono); font-size: 13px; }
@@ -201,7 +244,7 @@ main { max-width: 880px; margin: 0 auto; padding: 8px 16px 80px; }
 .code-top {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 10px 10px 14px;
-  background: #faf9f6;
+  background: var(--code-head);
   border-bottom: 1px solid var(--stroke);
 }
 .file-tab {
@@ -263,7 +306,7 @@ dialog.file-dialog[open] { display: flex; }
   display: flex; align-items: center; gap: 12px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--stroke);
-  background: #faf9f6;
+  background: var(--code-head);
 }
 .fv-path { color: var(--text-2); font: 12px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .fv-actions { margin-left: auto; display: flex; gap: 8px; flex: none; }
@@ -299,7 +342,7 @@ mark.word { background: rgba(255, 180, 84, .35); color: inherit; border-radius: 
 
 /* ---------- questions ---------- */
 .question { transition: border-color .2s, box-shadow .2s; }
-.question.current { border-color: var(--text); box-shadow: 0 0 0 4px rgba(20, 20, 20, .05); }
+.question.current { border-color: var(--text); box-shadow: 0 0 0 4px rgba(var(--tint), .05); }
 
 .q-head { display: flex; align-items: center; gap: 10px; }
 .q-num {
@@ -366,7 +409,7 @@ textarea::placeholder { color: var(--text-3); }
   --p: 0;
   --c: var(--accent);
   width: 62px; height: 62px; border-radius: 50%; flex: none;
-  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(20, 20, 20, .08) 0);
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(var(--tint), .08) 0);
   display: grid; place-items: center;
   transition: --p .8s;
 }
@@ -426,13 +469,13 @@ html { scroll-behavior: smooth; }
   transition: border-color .15s, background .15s;
 }
 .hero-stat:empty { display: none; }
-.hero-stat:hover { border-color: var(--text); background: #efeee8; }
+.hero-stat:hover { border-color: var(--text); background: var(--raised); }
 .hero-stat strong { display: block; font: 600 15px var(--display); letter-spacing: .03em; }
 .hero-stat small { color: var(--text-2); font-size: 12px; }
 .mini-ring {
   --p: 0;
   width: 52px; height: 52px; border-radius: 50%; flex: none;
-  background: conic-gradient(var(--success) calc(var(--p) * 1%), rgba(20, 20, 20, .1) 0);
+  background: conic-gradient(var(--success) calc(var(--p) * 1%), rgba(var(--tint), .1) 0);
   display: grid; place-items: center;
 }
 .mini-ring span {
@@ -452,12 +495,12 @@ html { scroll-behavior: smooth; }
 .is-unseen .m-value { color: var(--text-2); }
 .is-unseen .m-label { color: var(--text-2); }
 
-.stack { display: flex; height: 8px; border-radius: 99px; background: rgba(20, 20, 20, .07); overflow: hidden; }
+.stack { display: flex; height: 8px; border-radius: 99px; background: rgba(var(--tint), .07); overflow: hidden; }
 .stack.big { height: 12px; margin-top: 18px; }
 .stack i { display: block; height: 100%; transition: width .6s ease-out; }
 .s-mastered { background: var(--success); }
 .s-learning { background: var(--accent); }
-.s-unseen { background: rgba(20, 20, 20, .12); }
+.s-unseen { background: rgba(var(--tint), .12); }
 
 .legend { display: flex; gap: 18px; margin-top: 10px; font-size: 12px; color: var(--text-2); flex-wrap: wrap; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -513,7 +556,7 @@ dialog {
   border-radius: 20px;
   padding: 20px 22px;
 }
-dialog::backdrop { background: rgba(20, 20, 20, .45); backdrop-filter: blur(3px); }
+dialog::backdrop { background: rgba(10, 10, 10, .55); backdrop-filter: blur(3px); }
 .dialog-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .dialog-head h2 { margin: 0; font: 600 22px var(--display); }
 .h-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; padding: 12px 0; border-bottom: 1px solid var(--stroke); }
@@ -582,4 +625,6 @@ dialog::backdrop { background: rgba(20, 20, 20, .45); backdrop-filter: blur(3px)
 /* link back to Review Deck (shown when you came from there) */
 .deck-back { flex: none; display: inline-flex; align-items: center; height: 30px; padding: 0 11px; margin-right: 4px; border-radius: 999px; border: 1px solid #cfccc2; background: #fff; color: #141414; font: 600 12.5px Inter, system-ui, sans-serif; text-decoration: none; white-space: nowrap; }
 .deck-back:hover { border-color: #141414; }
+:root[data-theme="dark"] .deck-back { border-color: #3a3a3e; background: #18181a; color: #f4f3ef; }
+:root[data-theme="dark"] .deck-back:hover { border-color: #f4f3ef; }
 .topbar .brand { margin-right: auto; }
