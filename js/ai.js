@@ -18,7 +18,9 @@ function geminiSchema(schema) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function geminiError(status, detail) {
-  if (status === 400 && /api key/i.test(detail)) return "That Gemini API key isn't valid. Check it and try again.";
+  if ((status === 400 || status === 404) && /api key/i.test(detail)) return "That Gemini API key isn't valid. Check it and try again.";
+  // the key is fine - Google no longer serves the model this app asks for
+  if (status === 404) return "The Gemini model this app uses isn't available any more. Your key is fine - try again later or tell the site owner.";
   if (status === 403) return "This Gemini API key isn't allowed to use the Gemini API. Make a new key at aistudio.google.com/apikey.";
   if (status === 429) return "Your Gemini key hit its rate limit. Wait a minute and try again.";
   return `Gemini error ${status}: ${detail}`;
@@ -72,7 +74,7 @@ async function checkKey(key) {
   if (res.ok) return;
   let detail = await res.text();
   try { detail = JSON.parse(detail).error.message; } catch {}
-  throw new Error(geminiError(res.status === 404 ? 400 : res.status, detail));
+  throw new Error(geminiError(res.status, detail));
 }
 
 // ---------------------------------------------------------------- prompts
